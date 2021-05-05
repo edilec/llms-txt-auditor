@@ -1,0 +1,17 @@
+{
+  "name": "llms-txt-auditor",
+  "version": "0.0.0",
+  "description": "Check llms.txt files, links and crawler-facing guidance for consistent scope.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edilec/llms-txt-auditor"
+  }
+}
