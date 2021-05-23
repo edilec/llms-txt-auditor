@@ -1,0 +1,16 @@
+# Northwind Terminal
+
+> A command line client for the Northwind order service, documented for people and for automated readers alike.
+
+Paths in this file are relative to the file itself. Remote addresses are recorded
+in a capture rather than fetched during an audit.
+
+## Documentation
+
+- [Getting started](docs/getting-started.md): install the client and run a first order query.
+- [API reference](docs/api-reference.md): commands, flags and exit codes the client accepts.
+- [Deployment](docs/deployment.md): running the client from a scheduled job.
+
+## Optional
+
+- [Release history](https://example.com/northwind/releases): dated record of published versions.
