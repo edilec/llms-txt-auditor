@@ -340,3 +340,32 @@ test('an audit with no file, or a root that is not a directory, is refused', asy
     /The declared root could not be read/,
   )
 })
+
+test('the llms.txt file is not a document in its own inventory', async (t) => {
+  const root = await makeTree({
+    'llms.txt': [
+      '# Handbook',
+      '',
+      '> The team handbook, where the index sits beside the documents it lists.',
+      '',
+      '## Guides',
+      '',
+      'Every guide is listed below.',
+      '',
+      '- [Onboarding](onboarding.md): joining the team and getting access.',
+      '',
+    ].join('\n'),
+    'onboarding.md': '# Onboarding\n',
+  })
+  t.after(() => rm(root, { recursive: true, force: true }))
+
+  // The inventory root is the directory holding llms.txt, and `.txt` is a
+  // documentation extension: without the exclusion the index would count as a
+  // document nobody linked, and the coverage claim would fail on itself.
+  const report = await auditLlmsTxt({ file: join(root, 'llms.txt'), inventory: root })
+
+  assert.deepEqual(report.findings.map((finding) => finding.ruleId), ['section-prose-ignored'])
+  assert.equal(report.summary.inventoryDocuments, 1)
+  assert.equal(report.summary.inventoryLinked, 1)
+  assert.equal(report.status, 'pass')
+})
