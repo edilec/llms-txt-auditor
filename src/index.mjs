@@ -15,7 +15,7 @@
  */
 
 import { readFile, realpath, stat } from 'node:fs/promises'
-import { dirname, relative, resolve } from 'node:path'
+import { basename, dirname, relative, resolve } from 'node:path'
 
 import { byCodeUnit, classifyTarget, isInside, toPosix } from './paths.mjs'
 import { collectInventory } from './inventory.mjs'
@@ -318,6 +318,26 @@ function finish(collector, counts, extras) {
       ...extras,
     },
     findings,
+  }
+}
+
+/**
+ * The subject's real path, resolved as far as the filesystem allows.
+ *
+ * A subject that cannot be resolved still has to be placed relative to the
+ * root, so the directory holding it is resolved instead and the name is put
+ * back: a missing file inside a linked root is evidence to report, not a
+ * refusal to run. The unreadable subject itself is left to `readSubject`.
+ */
+async function realSubject(fileResolved) {
+  try {
+    return await realpath(fileResolved)
+  } catch {
+    try {
+      return resolve(await realpath(dirname(fileResolved)), basename(fileResolved))
+    } catch {
+      return fileResolved
+    }
   }
 }
 
@@ -883,18 +903,25 @@ export async function auditLlmsTxt(options = {}) {
     throw new ConfigError(`The declared root could not be read (${error.code ?? 'unknown error'})`)
   }
   if (!(await stat(rootReal)).isDirectory()) throw new ConfigError('The declared root must be a directory')
-  if (!isInside(rootReal, fileResolved)) throw new ConfigError('The llms.txt file is outside the declared root')
 
-  // The subject is named by the operator, so a subject that leaves the root
-  // through a link is a refusal to run, not a finding about the site.
-  let fileReal = fileResolved
-  try {
-    fileReal = await realpath(fileResolved)
-  } catch {
-    // Left to readSubject, which reports an unreadable subject as evidence.
-  }
+  // The subject is named by the operator, so a subject that leaves the root is
+  // a refusal to run, not a finding about the site.
+  //
+  // Both sides of that comparison are resolved the same way. Comparing a
+  // realpath'd root against a merely spelled file path refuses an llms.txt that
+  // never left the root at all, whenever the path to the root runs through a
+  // symbolic link — which is every temporary directory on macOS, where `/tmp`
+  // is a link to `/private/tmp`.
+  const fileReal = await realSubject(fileResolved)
   if (!isInside(rootReal, fileReal)) {
-    throw new ConfigError('The llms.txt file leaves the declared root through a symbolic link')
+    // Which refusal this is matters to the operator: a path spelled outside the
+    // root is a typo in the invocation, a path that only leaves it once the
+    // links are followed is a fact about the tree.
+    throw new ConfigError(
+      isInside(rootDeclared, fileResolved)
+        ? 'The llms.txt file leaves the declared root through a symbolic link'
+        : 'The llms.txt file is outside the declared root',
+    )
   }
 
   const relativeFile = toPosix(relative(rootReal, fileReal)) || 'llms.txt'

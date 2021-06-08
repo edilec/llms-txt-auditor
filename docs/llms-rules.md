@@ -59,6 +59,11 @@ and the **real** path, after every symbolic link has been followed, must be insi
 root. Nothing outside the root is opened, and no path or content from outside it reaches the
 report.
 
+The audited file itself is held to the same rule, and refused rather than reported on: `--file`
+must be inside the declared root once **both** paths are fully resolved. A root reached through a
+symbolic link is therefore still the root — `/tmp` and `/private/tmp` name one directory, and a
+file inside it never left it.
+
 ## Coverage claims
 
 A line of prose, a summary, or an H2 heading states complete coverage when it contains both a

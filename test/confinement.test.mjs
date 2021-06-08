@@ -159,3 +159,62 @@ test('an inventory root outside the declared root is refused', async (t) => {
     message: 'The inventory root leaves the declared root through a symbolic link',
   })
 })
+
+/**
+ * The mirror image of the cases above: confinement must refuse what leaves the
+ * root without refusing what never left it. The declared root is compared after
+ * both sides have been resolved, so a root reached through a symbolic link -
+ * every temporary directory on macOS, where `/tmp` is a link to `/private/tmp`
+ * - is still the root, and a file genuinely inside it is still inside it.
+ */
+
+test('a root reached through a symbolic link still holds its own llms.txt', async (t) => {
+  const base = await makeTree({
+    'actual/llms.txt': body('- [Onboarding](onboarding.md): joining the team and getting access.'),
+    'actual/onboarding.md': '# Onboarding\n',
+  })
+  await symlink(join(base, 'actual'), join(base, 'link'), 'dir')
+  t.after(() => rm(base, { recursive: true, force: true }))
+
+  const report = await auditLlmsTxt({ file: join(base, 'link', 'llms.txt') })
+
+  assert.deepEqual(report.findings, [])
+  assert.equal(report.status, 'pass')
+  assert.equal(report.summary.localTargets, 1)
+})
+
+test('a declared root spelled through a symbolic link is the same root', async (t) => {
+  const base = await makeTree({
+    'actual/site/llms.txt': body('- [Onboarding](/docs/onboarding.md): joining the team and getting access.'),
+    'actual/docs/onboarding.md': '# Onboarding\n',
+  })
+  await symlink(join(base, 'actual'), join(base, 'link'), 'dir')
+  t.after(() => rm(base, { recursive: true, force: true }))
+
+  const report = await auditLlmsTxt({ file: join(base, 'link', 'site', 'llms.txt'), root: join(base, 'link') })
+
+  assert.deepEqual(report.findings, [])
+  assert.equal(report.summary.localTargets, 1)
+})
+
+test('a missing file under a linked root is reported, not refused as outside it', async (t) => {
+  const base = await makeTree({ 'actual/placeholder.md': 'x\n' })
+  await symlink(join(base, 'actual'), join(base, 'link'), 'dir')
+  t.after(() => rm(base, { recursive: true, force: true }))
+
+  const report = await auditLlmsTxt({ file: join(base, 'link', 'llms.txt') })
+
+  assert.deepEqual(report.findings.map((finding) => finding.ruleId), ['file-unreadable'])
+  assert.equal(report.status, 'incomplete')
+})
+
+test('a file spelled outside the root says so, and is not blamed on a link', async (t) => {
+  const outside = await makeOutside()
+  const root = await makeTree({ 'placeholder.md': 'x\n' })
+  t.after(() => Promise.all([rm(root, { recursive: true, force: true }), rm(outside, { recursive: true, force: true })]))
+
+  await assert.rejects(() => auditLlmsTxt({ file: join(outside, OUTSIDE_NAME), root }), {
+    name: 'ConfigError',
+    message: 'The llms.txt file is outside the declared root',
+  })
+})
