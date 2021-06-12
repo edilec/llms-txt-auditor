@@ -306,6 +306,66 @@ test('a target that is not a regular file is refused, not accepted as an empty d
   assert.equal(exitCodeFor(report), 1)
 })
 
+/**
+ * Rules whose severity alone decides whether the run fails.
+ *
+ * None of these sets the incomplete flag, so downgrading one to `warning` turns
+ * a failing run into a clean exit 0 -- and for each of them that downgrade once
+ * went unnoticed by the whole suite. Every case is built so the named rule is
+ * the only finding, which is what makes the status assertion a severity test.
+ *
+ * `title-missing` is deliberately not here: without an H1 no link list is read
+ * at all, so `nothing-checked` fires with it and the run is incomplete whatever
+ * its severity. Its severity is pinned in test/severity-table.test.mjs instead.
+ */
+const ERROR_ALONE = [
+  {
+    ruleId: 'target-empty',
+    line: 7,
+    files: { 'llms.txt': ['# Handbook', '', '> The team handbook.', '', '## Guides', '', '- [A](): a description of a document.', ''] },
+  },
+  {
+    ruleId: 'title-duplicated',
+    line: 9,
+    files: {
+      'llms.txt': [
+        '# Handbook',
+        '',
+        '> The team handbook.',
+        '',
+        '## Guides',
+        '',
+        '- [A](a.md): a description of a document.',
+        '',
+        '# Handbook, named a second time',
+        '',
+      ],
+      'a.md': ['# A', ''],
+    },
+  },
+  {
+    ruleId: 'section-heading-empty',
+    line: 5,
+    files: {
+      'llms.txt': ['# Handbook', '', '> The team handbook.', '', '##', '', '- [A](a.md): a description of a document.', ''],
+      'a.md': ['# A', ''],
+    },
+  },
+]
+
+for (const { ruleId, line, files } of ERROR_ALONE) {
+  test(`${ruleId} is an error on its own, so the run fails and exits 1`, async (t) => {
+    const root = await makeTree(Object.fromEntries(Object.entries(files).map(([name, body]) => [name, body.join('\n')])))
+    t.after(() => rm(root, { recursive: true, force: true }))
+
+    const report = await auditLlmsTxt({ file: join(root, 'llms.txt') })
+
+    assert.deepEqual(place(report), [['llms.txt', line, ruleId, 'error']])
+    assert.equal(report.status, 'fail')
+    assert.equal(exitCodeFor(report), 1)
+  })
+}
+
 test('two runs over the same bytes produce the same report', async () => {
   const options = {
     file: example('broken', 'llms.txt'),

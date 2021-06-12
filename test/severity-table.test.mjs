@@ -64,6 +64,53 @@ test('the refusals that keep a run out of trouble are errors, not warnings', () 
   assert.equal(RULE_SEVERITY['unsafe-target'], 'error')
   assert.equal(RULE_SEVERITY['file-not-utf8'], 'error')
   assert.equal(RULE_SEVERITY['coverage-claim-unmet'], 'error')
+  assert.equal(RULE_SEVERITY['target-empty'], 'error')
+  assert.equal(RULE_SEVERITY['title-duplicated'], 'error')
+  assert.equal(RULE_SEVERITY['title-missing'], 'error')
+  assert.equal(RULE_SEVERITY['section-heading-empty'], 'error')
+})
+
+/**
+ * The whole error set, written out.
+ *
+ * `error` is the only severity that fails a run, so which rules hold it is the
+ * tool's contract rather than an implementation detail. The catalog test above
+ * compares the table with the documentation, and one edit can move both
+ * together; this list is the third copy, and it exists so that moving a rule
+ * out of `error` has to be a deliberate act recorded here.
+ */
+const ERROR_RULES = [
+  'coverage-claim-unmet',
+  'file-not-utf8',
+  'file-too-large',
+  'file-too-many-lines',
+  'file-unreadable',
+  'inventory-too-deep',
+  'inventory-too-many-files',
+  'inventory-unreadable',
+  'list-item-not-a-link',
+  'local-target-escapes-root',
+  'local-target-missing',
+  'local-target-not-file',
+  'local-target-outside-root',
+  'local-target-unreadable',
+  'remote-target-broken',
+  'section-heading-empty',
+  'target-empty',
+  'title-duplicated',
+  'title-missing',
+  'title-not-first',
+  'too-many-links',
+  'unsafe-target',
+]
+
+test('exactly these rules are errors, and nothing is quietly moved out of the set', () => {
+  const errors = Object.entries(RULE_SEVERITY)
+    .filter(([, severity]) => severity === 'error')
+    .map(([ruleId]) => ruleId)
+    .sort()
+
+  assert.deepEqual(errors, [...ERROR_RULES].sort())
 })
 
 test('every table entry uses a severity the report contract defines', () => {
