@@ -117,7 +117,7 @@ a claim into it would produce failures nobody wrote.
 | `local-target-empty-file` | warning | The target exists inside the root but has zero bytes. |
 | `local-target-escapes-root` | error | The target leaves the declared root through a symbolic link. It was refused, and nothing outside the root was read. |
 | `local-target-missing` | error | No such file inside the declared root. |
-| `local-target-not-file` | error | The target is a directory. No index-file convention is applied to it. |
+| `local-target-not-file` | error | The target is not a regular file: a directory, to which no index-file convention is applied, or a named pipe, socket or device node, which names nothing a reader can read to the end. |
 | `local-target-outside-root` | error | The target resolves outside the declared root by its spelling. It was refused before being opened. |
 | `local-target-unreadable` | error | The target could not be resolved - a symlink loop, or a permission failure. It was not checked; the run is `incomplete`. |
 | `nothing-checked` | warning | The run examined no link list entries at all. A pass on no evidence is not a pass, so the run is `incomplete`. |

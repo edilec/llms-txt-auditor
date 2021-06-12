@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:net'
 import { dirname, join, resolve } from 'node:path'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -272,6 +273,37 @@ test('two entries naming the same document are reported once, on the later line'
     report.findings.filter((finding) => finding.ruleId === 'target-duplicated').map((finding) => finding.line),
     [8, 10],
   )
+})
+
+test('a target that is not a regular file is refused, not accepted as an empty document', async (t) => {
+  const root = await makeTree({
+    'llms.txt': [
+      '# Handbook',
+      '',
+      '> The team handbook.',
+      '',
+      '## Guides',
+      '',
+      '- [Channel](channel.md): a socket wearing the name of a document.',
+      '',
+    ].join('\n'),
+  })
+  // A socket is the one non-regular file a test can create with a built-in, and
+  // it stands in for a named pipe or a device node: zero bytes, present on
+  // disk, and nothing a consumer can read to the end.
+  const server = createServer()
+  await new Promise((fulfil) => server.listen(join(root, 'channel.md'), fulfil))
+  t.after(async () => {
+    await new Promise((fulfil) => server.close(fulfil))
+    await rm(root, { recursive: true, force: true })
+  })
+
+  const report = await auditLlmsTxt({ file: join(root, 'llms.txt') })
+
+  assert.deepEqual(place(report), [['llms.txt', 7, 'local-target-not-file', 'error']])
+  assert.match(report.findings[0].message, /channel\.md is not a regular file/)
+  assert.equal(report.status, 'fail')
+  assert.equal(exitCodeFor(report), 1)
 })
 
 test('two runs over the same bytes produce the same report', async () => {

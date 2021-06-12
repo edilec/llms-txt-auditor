@@ -100,8 +100,8 @@ What this tool **cannot** conclude, stated plainly so a green run is not read as
 - **Nothing about remote addresses.** There is no network here. An `https://` entry is *unverified*
   unless an imported capture records what it served, and an unverified run is `incomplete`, not a
   pass. A capture is a record of some past fetch by someone else; it is not evidence about now.
-- **Nothing about whether a document is any good.** It checks that a target exists, is a file, and
-  is not empty. It does not read the document, check its headings, follow anchors inside it, or
+- **Nothing about whether a document is any good.** It checks that a target exists, is a regular
+  file, and is not empty. It does not read the document, check its headings, follow anchors inside it, or
   judge whether the description is true.
 - **Coverage claims are detected lexically.** A sentence counts as a completeness claim when it
   carries both a completeness word and a listing word from a fixed vocabulary (documented in

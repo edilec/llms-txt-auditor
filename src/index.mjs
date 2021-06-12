@@ -734,11 +734,18 @@ async function auditTarget(entry, context) {
 
   const info = await stat(real)
   const relativeTarget = toPosix(relative(rootReal, real))
-  if (info.isDirectory()) {
+  // A document is a regular file. A directory, a named pipe, a socket or a
+  // device node is not one, and reading it is not something a consumer can
+  // finish: a pipe with no writer blocks forever. This is the same line the
+  // inventory walk draws, so the two halves of the audit agree about what a
+  // document is.
+  if (!info.isFile()) {
     record(collector, {
       ...at,
       ruleId: 'local-target-not-file',
-      message: `The target is a directory (${relativeTarget}); this tool applies no index-file convention to it.`,
+      message: info.isDirectory()
+        ? `The target is a directory (${relativeTarget}); this tool applies no index-file convention to it.`
+        : `The target ${relativeTarget} is not a regular file, so it names nothing a reader can read to the end.`,
       suggestion: 'Link to the document itself.',
     })
     return
