@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import test from 'node:test'
@@ -107,6 +107,60 @@ test('a file over maxLines is incomplete and says what was not read', async (t) 
   )
   assert.match(report.findings[1].message, /over the maxLines limit of 3; nothing from line 4 on was read/)
   assert.equal(report.findings[1].line, 4)
+})
+
+test('a file over maxLines is incomplete even when the part that was read had entries', async (t) => {
+  // The case above is masked: with nothing read at all `nothing-checked` sets
+  // the flag by itself, so the truncation flag is never the thing under test.
+  // Here the first entry is read and checked, and the truncation flag is the
+  // only thing between a partly-read file and a green run.
+  const report = await expectIncomplete(
+    t,
+    {
+      'llms.txt': [
+        '# Handbook',
+        '',
+        '> The team handbook.',
+        '',
+        '## Guides',
+        '',
+        '- [A](a.md): a description of a document.',
+        '',
+        '- [B](b.md): another description entirely.',
+        '',
+      ].join('\n'),
+      'a.md': 'x\n',
+      'b.md': 'y\n',
+    },
+    () => ({ limits: { maxLines: 8 } }),
+    ['file-too-many-lines'],
+  )
+  assert.equal(report.summary.checked, 1)
+  assert.equal(report.findings[0].severity, 'error')
+})
+
+test('a file the process may not read is incomplete, not a run that read everything', async (t) => {
+  if (process.platform === 'win32' || process.getuid?.() === 0) {
+    // Nothing here can make a file unreadable, so there is no case to run.
+    t.skip('this case needs an unprivileged process on a POSIX filesystem')
+    return
+  }
+  const root = await makeTree({ 'llms.txt': withEntries('- [A](a.md): a description of a document.'), 'a.md': 'x\n' })
+  t.after(async () => {
+    await chmod(join(root, 'llms.txt'), 0o600)
+    await rm(root, { recursive: true, force: true })
+  })
+  // stat still answers for a mode-000 file; it is the read that fails, which is
+  // its own path through readSubject and its own incomplete flag.
+  await chmod(join(root, 'llms.txt'), 0o000)
+
+  const report = await auditLlmsTxt({ file: join(root, 'llms.txt') })
+
+  assert.deepEqual(report.findings.map((finding) => finding.ruleId), ['file-unreadable'])
+  assert.match(report.findings[0].message, /could not be read \(EACCES\)/)
+  assert.equal(report.status, 'incomplete')
+  assert.equal(exitCodeFor(report), 2)
+  assert.equal(report.summary.checked, 0)
 })
 
 test('more entries than maxLinks is incomplete', async (t) => {
