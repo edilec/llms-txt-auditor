@@ -215,6 +215,48 @@ test('minDescriptionChars is enforced at the configured value, not only at its d
   )
 })
 
+test('maxDescriptionChars is enforced, at its default and at a configured value', async (t) => {
+  const long = 'a description of the document, '.repeat(8).trim()
+  assert.equal(long.length, 247)
+  const root = await makeTree({
+    'llms.txt': [
+      '# H',
+      '',
+      '> A summary.',
+      '',
+      '## S',
+      '',
+      `- [A](a.md): ${long}`,
+      '- [B](b.md): a short but sufficient description.',
+      '- [C](c.md): exactly thirty characters here',
+      '',
+    ].join('\n'),
+    'a.md': 'content\n',
+    'b.md': 'content\n',
+    'c.md': 'content\n',
+  })
+  t.after(() => rm(root, { recursive: true, force: true }))
+
+  const file = join(root, 'llms.txt')
+  const byDefault = await auditLlmsTxt({ file })
+  assert.deepEqual(byDefault.findings.map((finding) => [finding.line, finding.ruleId, finding.severity]), [
+    [7, 'description-too-long', 'info'],
+  ])
+  assert.match(byDefault.findings[0].message, /is 247 characters, over the maxDescriptionChars limit of 200/)
+  // Evidence stays bounded: a long description is cut, not copied into the report.
+  assert.equal(byDefault.findings[0].evidence.length, 163)
+  assert.equal(byDefault.status, 'pass')
+
+  const configured = await auditLlmsTxt({ file, limits: { maxDescriptionChars: 30 } })
+  assert.deepEqual(configured.findings.map((finding) => [finding.line, finding.ruleId]), [
+    [7, 'description-too-long'],
+    [8, 'description-too-long'],
+  ])
+  assert.match(configured.findings[1].message, /is 35 characters, over the maxDescriptionChars limit of 30/)
+  // The entry on line 9 is exactly at the limit: the limit is the longest
+  // description accepted, so the boundary itself is not a finding.
+})
+
 test('an Optional section that says its content is required is a contradiction', async (t) => {
   const root = await makeTree({
     'llms.txt': [
