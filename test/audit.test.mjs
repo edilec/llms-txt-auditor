@@ -86,20 +86,22 @@ test('the clean example passes with no findings', async () => {
   )
 })
 
-test('every report carries the advisory, and no message claims llms.txt compels a consumer', async () => {
+test('every report carries the advisory, whatever the run found', async () => {
   const report = await auditLlmsTxt({
     file: example('broken', 'llms.txt'),
     inventory: example('broken', 'docs'),
     capture: await readJson(example('broken', 'capture.json')),
   })
+  const clean = await auditLlmsTxt({ file: example('clean', 'llms.txt') })
 
   assert.equal(report.advisory, ADVISORY)
+  assert.equal(clean.advisory, ADVISORY)
   assert.match(ADVISORY, /not an enforcement mechanism/)
 
-  const prose = report.findings.map((finding) => `${finding.message} ${finding.suggestion ?? ''}`).join(' ')
-  for (const forbidden of [/\bcompl(y|ies|iance)\b/i, /\benforc/i, /\bcrawler/i, /\brequires? (a )?(crawler|agent|model)/i]) {
-    assert.doesNotMatch(prose, forbidden, `a rule message claims enforcement: ${forbidden}`)
-  }
+  // The other half of the acceptance condition -- that no rule message claims
+  // llms.txt compels a consumer -- is scanned across the whole catalog in
+  // test/rule-catalog.test.mjs. Scanning the findings of this one fixture would
+  // cover fourteen of the forty-four rules and say nothing about the rest.
 })
 
 test('a section claiming complete coverage is measured against that section only', async (t) => {

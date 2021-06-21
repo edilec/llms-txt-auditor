@@ -130,7 +130,8 @@ npm run example   # the clean example, exit 0
 
 Node built-ins only: no runtime dependencies and no dev dependencies. Tests cover the public API
 and the real CLI, including root confinement against planted symbolic links, every path that can
-leave a run `incomplete`, and byte-identical output across two runs.
+leave a run `incomplete`, every rule in the catalog firing at least once, and byte-identical
+output across two runs.
 
 ## License
 
