@@ -42,4 +42,15 @@ All notable changes to this project are documented in this file.
 - the rule catalog, the parsed Markdown subset, the claim vocabulary, the limits
   and the determinism guarantee in `docs/llms-rules.md`.
 
+### Fixed
+
+- a link target that exists but is not a regular file — a named pipe, a socket
+  or a device node — is refused as `local-target-not-file` rather than accepted
+  as an empty document with a warning; the audit now draws the same line the
+  inventory walk already drew;
+- the audited file and the declared root are compared as resolved paths on both
+  sides, so an llms.txt genuinely inside a root reached through a symbolic link
+  (`/tmp` → `/private/tmp`) is no longer refused as outside it, and a missing
+  file under such a root is reported as evidence rather than refused.
+
 No release has been published.
