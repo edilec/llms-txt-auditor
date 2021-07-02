@@ -3,7 +3,14 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-import { ADVISORY, DEFAULT_LIMITS, auditLlmsTxt, exitCodeFor, formatReport } from '../src/index.mjs'
+import {
+  ADVISORY,
+  DEFAULT_LIMITS,
+  auditLlmsTxt,
+  exitCodeFor,
+  formatReport,
+  parseFailureDetail,
+} from '../src/index.mjs'
 
 const HELP = `llms-txt-auditor
 
@@ -98,7 +105,7 @@ async function loadCapture(path) {
   try {
     return JSON.parse(text)
   } catch (error) {
-    throw new Error(`The capture is not valid JSON: ${error.message}`)
+    throw new Error(`The capture is not valid JSON: ${parseFailureDetail(error)}.`)
   }
 }
 

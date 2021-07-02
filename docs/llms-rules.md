@@ -160,6 +160,14 @@ one-character typo must not turn a real failure into a green run.
 Evidence excerpts are flattened to one line, stripped of control characters, and cut to 160
 characters (120 for a `target`).
 
+A capture that cannot be parsed is bounded separately, because an excerpt does not reach it. V8
+reports an invalid document two ways, and one of them embeds the input:
+`Unexpected token 'A', "AKIAIOSFODNN7EXAMPLE" is not valid JSON` reproduces a short capture in
+full, and a longer one through a window around the offence. Cutting from the end cannot help when
+the quoted span is at the front. The refusal keeps only the useful half -- the position, line and
+column where V8 reports them, and the offending token where it does not -- so the capture nothing
+has validated is also the capture that is not repeated back.
+
 ## Inventory
 
 `--inventory DIR` names the documentation root the file is supposed to index. It must be inside
