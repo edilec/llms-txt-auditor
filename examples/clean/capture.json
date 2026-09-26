@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "1",
+  "capturedAt": "2026-09-01",
+  "source": "manual capture, recorded by hand and committed alongside the example",
+  "urls": {
+    "https://example.com/northwind/releases": { "state": "ok", "httpStatus": 200 }
+  }
+}

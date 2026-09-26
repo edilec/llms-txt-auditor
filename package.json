@@ -1,0 +1,52 @@
+{
+  "name": "llms-txt-auditor",
+  "version": "0.1.0",
+  "description": "Audit a local llms.txt file and the documentation inventory it indexes: structure, link targets, descriptions and stated coverage, with line-level diagnostics.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "node --check src/index.mjs && node --check src/parse.mjs && node --check src/paths.mjs && node --check src/inventory.mjs && node --check bin/llms-txt-auditor.mjs && node --check test/parse.test.mjs && node --check test/audit.test.mjs && node --check test/confinement.test.mjs && node --check test/determinism.test.mjs && node --check test/incomplete.test.mjs && node --check test/rule-catalog.test.mjs && node --check test/severity-table.test.mjs && node --check test/cli.test.mjs && node --check test/parse-leak.test.mjs",
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-include=src/**",
+    "example": "node bin/llms-txt-auditor.mjs --file examples/clean/llms.txt --inventory examples/clean/docs --capture examples/clean/capture.json",
+    "pack:check": "npm pack --dry-run",
+    "check": "npm run lint && npm test && npm run example && npm run pack:check"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edilec/llms-txt-auditor.git"
+  },
+  "bin": {
+    "llms-txt-auditor": "./bin/llms-txt-auditor.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "examples",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "llms-txt",
+    "documentation",
+    "markdown",
+    "links",
+    "coverage",
+    "seo",
+    "audit",
+    "cli"
+  ],
+  "author": "Edilec Private Limited",
+  "bugs": {
+    "url": "https://github.com/edilec/llms-txt-auditor/issues"
+  },
+  "homepage": "https://github.com/edilec/llms-txt-auditor#readme"
+}

@@ -1,0 +1,20 @@
+Draft index for the Northwind Terminal documentation.
+
+# Northwind Terminal
+
+## Documentation
+
+Every page of the handbook is listed here.
+
+- [Getting started](docs/getting-started.md): install the client and run a first order query.
+- [API reference](docs/api-referense.md): the target is misspelled, so no such document exists.
+- [Deployment](docs/): points at the directory rather than at the document.
+- [Runbook](../private/runbook.md): resolves outside the declared root.
+- [Support](mailto:support@example.com)
+- [Changelog](javascript:alert(1)): not a document address at all.
+- a plain note that is not a link at all
+- [Status page](https://status.example.com/northwind): current state of the service.
+
+### Notes
+
+- [Release history](https://example.com/northwind/releases): dated record of published versions.
