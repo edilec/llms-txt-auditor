@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.1.0 — 2026-10-14
 
 ### Added
 
@@ -53,4 +53,4 @@ All notable changes to this project are documented in this file.
   (`/tmp` → `/private/tmp`) is no longer refused as outside it, and a missing
   file under such a root is reported as evidence rather than refused.
 
-No release has been published.
+GitHub source release v0.1.0 — 2026-10-14.
